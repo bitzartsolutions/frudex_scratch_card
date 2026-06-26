@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frudex – You Won! 🎉</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --forest:#073B32;
+  --teal:#0F7A69;
+  --mint:#9EFFAD;
+  --cream:#F7FBF7;
+  --gold:#C9A84C;
+  --glt:#F0D080;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--forest);
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:28px 16px 52px;
+  overflow-x:hidden;
+}
+
+/* animated bg */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 5%,rgba(15,122,105,.4) 0%,transparent 55%),
+    radial-gradient(ellipse 55% 75% at 85% 95%,rgba(158,255,173,.1) 0%,transparent 55%),
+    linear-gradient(160deg,#073B32 0%,#0a4d42 50%,#073B32 100%);
+  animation:bgPulse 9s ease-in-out infinite alternate;
+}
+@keyframes bgPulse{0%{filter:brightness(1)}100%{filter:brightness(1.14)}}
+
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(158,255,173,.03) 60px),
+    repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(158,255,173,.03) 60px);
+}
+
+/* ── stars ── */
+#stars{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.st{
+  position:absolute;border-radius:50%;background:var(--mint);opacity:0;
+  animation:twinkle var(--d) var(--dl) infinite;
+}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(1)}50%{opacity:.7;transform:scale(1.8)}}
+
+/* ── overlays ── */
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:100}
+#flash{position:fixed;inset:0;z-index:200;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at center,rgba(158,255,173,.6) 0%,rgba(255,255,255,.1) 50%,transparent 70%);
+  transition:opacity .07s}
+#flash.on{opacity:1}
+
+/* ── celebration modal ── */
+#celModal{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(7,59,50,.88);
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);
+}
+#celModal.open{display:flex;animation:fadeIn .35s ease both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.cel-card{
+  background:linear-gradient(145deg,#0d6656,#073B32);
+  border:2px solid var(--mint);
+  border-radius:28px;padding:44px 36px;
+  max-width:370px;width:90%;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  text-align:center;
+  box-shadow:0 0 60px rgba(158,255,173,.3),0 30px 80px rgba(0,0,0,.65);
+  animation:popIn .55s cubic-bezier(.16,1,.3,1) both;
+  position:relative;overflow:visible;
+}
+@keyframes popIn{from{opacity:0;transform:scale(.75)}to{opacity:1;transform:scale(1)}}
+
+/* pulse rings around modal */
+.pulse-ring{
+  position:absolute;inset:-2px;border-radius:30px;
+  border:2px solid var(--mint);pointer-events:none;
+  animation:pulseRing 1.6s ease-out infinite;
+}
+.pulse-ring:nth-child(2){animation-delay:.6s;border-color:rgba(158,255,173,.5)}
+@keyframes pulseRing{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.45);opacity:0}}
+
+.cel-trophy{font-size:4.5rem;animation:tropBounce 1s ease-in-out infinite}
+@keyframes tropBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.cel-title{
+  font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;
+  color:var(--mint);text-shadow:0 0 24px rgba(158,255,173,.6);
+}
+.cel-sub{font-size:.88rem;color:rgba(247,251,247,.7);line-height:1.5}
+.cel-code{
+  font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;
+  letter-spacing:.12em;color:var(--glt);
+  background:rgba(240,208,128,.1);border:1px solid rgba(240,208,128,.35);
+  border-radius:10px;padding:10px 24px;margin:4px 0;
+  text-shadow:0 0 18px rgba(240,208,128,.5);
+}
+.cel-validity{font-size:.7rem;color:rgba(247,251,247,.38);letter-spacing:.5px}
+.cel-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+
+/* ── buttons ── */
+.btn{
+  font-family:'DM Sans',sans-serif;font-weight:700;font-size:.88rem;
+  letter-spacing:.04em;border:none;border-radius:50px;padding:13px 28px;
+  cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;
+}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.08);opacity:0;transition:.2s}
+.btn:hover::after{opacity:1}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--mint),#6effa0);color:var(--forest);
+  box-shadow:0 6px 22px rgba(158,255,173,.38)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(158,255,173,.55)}
+.btn-secondary{background:transparent;color:var(--mint);border:1.5px solid var(--mint)}
+.btn-secondary:hover{background:rgba(158,255,173,.08);transform:translateY(-2px)}
+
+/* ── toast ── */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(22px);
+  background:var(--forest);color:var(--mint);border:1px solid var(--teal);
+  font-size:13px;font-weight:600;padding:10px 24px;border-radius:30px;
+  opacity:0;transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ════ PAGE ENTRANCE ════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.87)}to{opacity:1;transform:scale(1)}}
+
+.wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:20px;max-width:440px;width:100%}
+.brand{animation:fadeDown .6s .1s cubic-bezier(.16,1,.3,1) both}
+.badge{animation:fadeDown .5s .22s cubic-bezier(.16,1,.3,1) both}
+.card{animation:scaleIn .75s .35s cubic-bezier(.16,1,.3,1) both}
+.foot{animation:fadeUp .6s .9s cubic-bezier(.16,1,.3,1) both}
+
+/* ── brand ── */
+.brand{display:flex;align-items:center;gap:10px;color:var(--cream);letter-spacing:.12em;font-size:13px;font-weight:600;text-transform:uppercase}
+.brand-logo-img{
+  height:56px;
+  width:auto;
+  max-width:200px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 14px rgba(158,255,173,.45));
+  animation:logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse{
+  0%,100%{filter:drop-shadow(0 0 14px rgba(158,255,173,.4))}
+  50%{filter:drop-shadow(0 0 26px rgba(158,255,173,.8))}
+}
+
+/* ── badge ── */
+.badge{
+  background:linear-gradient(135deg,var(--gold),var(--glt) 50%,var(--gold));
+  background-size:200% auto;
+  color:var(--forest);font-size:11px;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;padding:6px 18px;border-radius:20px;
+  animation:fadeDown .5s .22s both,badgeShine 2.8s 1.2s linear infinite;
+}
+@keyframes badgeShine{0%{background-position:0% center}100%{background-position:200% center}}
+
+/* ── scratch card ── */
+.card{
+  width:100%;background:var(--cream);border-radius:24px;padding:32px 28px 28px;
+  box-shadow:0 0 0 1px rgba(158,255,173,.18),0 32px 80px rgba(0,0,0,.55);
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(15,122,105,.035) 20px,rgba(15,122,105,.035) 40px);
+}
+
+.card-head{text-align:center;margin-bottom:22px}
+.card-head .ey{
+  font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--teal);margin-bottom:6px;
+  animation:fadeUp .5s .55s both;
+}
+.card-head h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(22px,5vw,30px);font-weight:900;color:var(--forest);line-height:1.15;
+  animation:fadeUp .55s .65s both;
+}
+.card-head h1 span{color:var(--teal)}
+
+.trophy-row{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin-bottom:20px;animation:fadeUp .5s .75s both;
+}
+.ti{font-size:30px;display:inline-block;animation:tBounce 2.4s 1s ease-in-out infinite}
+.ti:last-child{animation-delay:1.5s}
+@keyframes tBounce{0%,100%{transform:translateY(0) rotate(0)}40%{transform:translateY(-9px) rotate(-5deg)}60%{transform:translateY(-5px) rotate(4deg)}}
+.wname{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--forest)}
+
+/* ── scratch zone ── */
+.zone{
+  position:relative;width:100%;border-radius:16px;overflow:hidden;
+  margin-bottom:18px;
+  box-shadow:0 4px 20px rgba(7,59,50,.2);
+  animation:fadeUp .5s .85s both;
+}
+/* canvas sits ON TOP of revealed div */
+#sc{
+  position:absolute;top:0;left:0;
+  border-radius:16px;
+  touch-action:none;
+  cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36'%3E%3Ccircle cx='18' cy='18' r='12' fill='%239EFFAD' fill-opacity='.65'/%3E%3C/svg%3E") 18 18,crosshair;
+  display:block;
+}
+
+/* revealed prize */
+.prize-reveal{
+  background:linear-gradient(145deg,#073B32,#0F7A69);
+  border-radius:16px;padding:38px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.pr-congrats{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--mint);opacity:0}
+.pr-label{font-size:12px;color:var(--cream);opacity:.65;opacity:0}
+.pr-code{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(28px,7vw,38px);font-weight:900;
+  letter-spacing:.14em;color:var(--glt);
+  text-shadow:0 0 30px rgba(240,208,128,.5);
+  opacity:0;transform:scale(.7);
+  position:relative;
+}
+.pr-code.animate::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.5) 50%,transparent 100%);
+  background-size:200% auto;
+  animation:shimmer 1.8s .4s ease forwards;border-radius:4px;
+}
+@keyframes shimmer{from{background-position:-200% center;opacity:1}to{background-position:200% center;opacity:0}}
+.pr-discount{font-size:13px;color:var(--mint);font-weight:500;opacity:0}
+
+/* staggered show */
+.prize-reveal.show .pr-congrats {animation:fadeUp .45s .08s both}
+.prize-reveal.show .pr-label    {animation:fadeUp .45s .22s both}
+.prize-reveal.show .pr-code     {animation:codePop .65s .38s cubic-bezier(.16,1,.3,1) both}
+.prize-reveal.show .pr-discount {animation:fadeUp .45s .7s both}
+
+@keyframes codePop{
+  0%  {opacity:0;transform:scale(.55) rotate(-6deg);filter:brightness(2.5)}
+  55% {opacity:1;transform:scale(1.12) rotate(3deg);filter:brightness(1.4)}
+  75% {transform:scale(.96);filter:brightness(1.05)}
+  100%{opacity:1;transform:scale(1) rotate(0deg);filter:brightness(1)}
+}
+
+/* zone glow ring */
+.zone-ring{
+  position:absolute;inset:-3px;border-radius:19px;
+  border:2.5px solid var(--mint);pointer-events:none;z-index:5;
+  animation:zoneRing .7s ease-out forwards;
+}
+@keyframes zoneRing{0%{transform:scale(.96);opacity:1}100%{transform:scale(1.1);opacity:0}}
+
+/* ── hint ── */
+.hint{
+  display:flex;align-items:center;gap:8px;justify-content:center;
+  font-size:13px;color:var(--teal);font-weight:500;
+  animation:fadeUp .5s .95s both;transition:opacity .4s;
+}
+.hint-dot{width:7px;height:7px;border-radius:50%;background:var(--mint);flex-shrink:0;animation:dotP 1.4s infinite}
+@keyframes dotP{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.7)}}
+
+/* ── progress bar ── */
+.pbar-wrap{height:4px;background:rgba(7,59,50,.12);border-radius:4px;overflow:hidden;margin-bottom:8px;animation:fadeUp .4s 1s both}
+.pbar{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--mint));border-radius:4px;transition:width .1s;box-shadow:0 0 8px rgba(158,255,173,.5)}
+
+/* ── CTA ── */
+.cta{
+  width:100%;padding:17px;
+  background:linear-gradient(135deg,var(--mint),#6effa0);color:var(--forest);
+  border:none;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;
+  cursor:pointer;position:relative;overflow:hidden;
+  box-shadow:0 6px 24px rgba(158,255,173,.35);
+  display:none;margin-top:4px;
+  transition:transform .15s,box-shadow .15s;
+}
+.cta.show{display:block;animation:scaleIn .5s cubic-bezier(.16,1,.3,1) both}
+.cta:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(158,255,173,.55)}
+.cta:active{transform:translateY(0)}
+.cta::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);
+  background-size:200% auto;
+  animation:btnShine 2.4s 1s ease infinite;
+}
+@keyframes btnShine{0%{background-position:-200% center;opacity:0}20%,80%{opacity:1}100%{background-position:200% center;opacity:0}}
+
+/* ── footer ── */
+.foot{text-align:center;font-size:11px;color:rgba(247,251,247,.35);line-height:1.7}
+.foot a{color:var(--mint);text-decoration:none}
+.foot a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div id="flash"></div>
+<div id="stars"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<!-- Celebration Modal -->
+<div id="celModal">
+  <div class="cel-card">
+    <div class="pulse-ring"></div>
+    <div class="pulse-ring"></div>
+    <div class="cel-trophy">🏆</div>
+    <div class="cel-title">YOU WON! 🎉</div>
+    <div class="cel-sub">You're a verified Frudex Prediction Winner!<br>Use your exclusive code at checkout.</div>
+    <div class="cel-code" id="modalCode">FIFA2026</div>
+    <div class="cel-validity">Valid 7 days · One use only · frudexdryfruits.in</div>
+    <div class="cel-btns">
+      <button class="btn btn-primary" onclick="shopNow()">🛒 Shop Now</button>
+      <button class="btn btn-secondary" onclick="closeCel()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✓ Code copied! Paste at checkout 🛒</div>
+
+<!-- Page -->
+<div class="wrap">
+
+  <div class="brand">
+    <img src="pnggg (1).png" alt="Frudex" class="brand-logo-img">
+  </div>
+
+  <div class="badge">⚽ FIFA Wild Cup · Prediction Winner</div>
+
+  <div class="card">
+
+    <div class="card-head">
+      <p class="ey">Congratulations, Champion!</p>
+      <h1>Your <span>exclusive</span><br>reward awaits</h1>
+    </div>
+
+    <div class="trophy-row">
+      <span class="ti">🏆</span>
+      <span class="wname">You called it right!</span>
+      <span class="ti">🌟</span>
+    </div>
+
+    <!-- Scratch zone -->
+    <div class="zone" id="zone">
+      <div class="prize-reveal" id="prizeReveal">
+        <p class="pr-congrats">🎉 You won!</p>
+        <p class="pr-label">Your exclusive discount code</p>
+        <p class="pr-code" id="prizeCode">FIFA2026</p>
+        <p class="pr-discount">₹450 OFF your order at frudexdryfruits.in</p>
+      </div>
+      <canvas id="sc"></canvas>
+    </div>
+
+    <p class="hint" id="hint">
+      <span class="hint-dot"></span>
+      Scratch the silver area to reveal your ₹450 winner code
+    </p>
+
+    <div class="pbar-wrap">
+      <div class="pbar" id="pbar"></div>
+    </div>
+
+    <button class="cta" id="cta" onclick="copyCode()">
+      🛒 Copy Code &amp; Shop at Frudex →
+    </button>
+
+  </div>
+
+  <p class="foot">
+    Valid for one use only · Exclusive to Instagram prediction winners<br>
+    Expires 7 days from receiving this link ·
+    <a href="https://www.frudexdryfruits.in/" target="_blank">frudexdryfruits.in</a>
+  </p>
+
+</div>
+
+<script>
+/* ══ STAR FIELD ══ */
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 90; i++) {
+  const s = document.createElement('div');
+  s.className = 'st';
+  const sz = 1 + Math.random() * 2.5;
+  s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--d:${2+Math.random()*5}s;--dl:${Math.random()*6}s`;
+  starsEl.appendChild(s);
+}
+
+/* ══ SCRATCH ENGINE ══ */
+const zone      = document.getElementById('zone');
+const reveal    = document.getElementById('prizeReveal');
+const canvas    = document.getElementById('sc');
+const ctx       = canvas.getContext('2d');
+const pbar      = document.getElementById('pbar');
+const hintEl    = document.getElementById('hint');
+const ctaBtn    = document.getElementById('cta');
+
+let scratching = false;
+let revealed   = false;
+let lastX = null, lastY = null;
+
+/* Size canvas to match the revealed div, account for devicePixelRatio */
+function sizeCanvas() {
+  const w = reveal.offsetWidth;
+  const h = reveal.offsetHeight;
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+  drawSilver(w, h);
+}
+
+function drawSilver(w, h) {
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+
+  /* silver gradient */
+  const g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0,   '#6b8874');
+  g.addColorStop(.25, '#aec4b5');
+  g.addColorStop(.5,  '#d5ead8');
+  g.addColorStop(.75, '#aec4b5');
+  g.addColorStop(1,   '#6b8874');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  /* noise dots */
+  for (let i = 0; i < 3000; i++) {
+    ctx.fillStyle = `rgba(${Math.random()>.5?255:0},${Math.random()>.5?255:0},${Math.random()>.5?255:0},0.02)`;
+    ctx.fillRect(Math.random()*w, Math.random()*h, 2, 2);
+  }
+
+  /* watermark */
+  ctx.save();
+  ctx.globalAlpha = .16;
+  ctx.fillStyle   = '#4a6e55';
+  ctx.font        = '600 11px DM Sans,sans-serif';
+  ctx.textAlign   = 'center';
+  for (let y = 18; y < h; y += 32) {
+    for (let x = 0; x < w; x += 88) ctx.fillText('⚽ FRUDEX', x, y);
+  }
+  ctx.restore();
+
+  /* main text */
+  ctx.save();
+  ctx.textAlign  = 'center';
+  ctx.globalAlpha = .6;
+  ctx.fillStyle  = '#3a5e45';
+  ctx.font       = 'bold 15px DM Sans,sans-serif';
+  ctx.fillText('✦  SCRATCH HERE  ✦', w/2, h/2 - 10);
+  ctx.globalAlpha = .32;
+  ctx.font       = '500 11px DM Sans,sans-serif';
+  ctx.fillText('Drag to reveal your winner code', w/2, h/2 + 14);
+  ctx.restore();
+
+  /* ── switch to smooth erase brush ── */
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.lineWidth   = 52;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+  ctx.strokeStyle = 'rgba(0,0,0,1)';
+  ctx.fillStyle   = 'rgba(0,0,0,1)';
+}
+
+/* Wait until everything has rendered, then size */
+window.addEventListener('load', () => {
+  setTimeout(sizeCanvas, 60);
+});
+window.addEventListener('resize', () => {
+  if (!revealed) sizeCanvas();
+});
+
+/* ── pointer helpers ── */
+function getXY(e) {
+  const r   = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return {
+    x: src.clientX - r.left,
+    y: src.clientY - r.top
+  };
+}
+
+function startScratch(e) {
+  if (revealed) return;
+  e.preventDefault();
+  scratching = true;
+  const p = getXY(e);
+  lastX = p.x; lastY = p.y;
+  /* dot at tap/click start */
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 26, 0, Math.PI * 2);
+  ctx.fill();
+  measureProgress();
+}
+
+function moveScratch(e) {
+  if (!scratching || revealed) return;
+  e.preventDefault();
+  const p = getXY(e);
+  /* smooth continuous stroke */
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  /* extra fill circle so no gaps at speed */
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 26, 0, Math.PI * 2);
+  ctx.fill();
+  lastX = p.x; lastY = p.y;
+  measureProgress();
+}
+
+function endScratch() {
+  scratching = false;
+  lastX = null; lastY = null;
+}
+
+canvas.addEventListener('mousedown',  startScratch);
+canvas.addEventListener('mousemove',  moveScratch);
+canvas.addEventListener('mouseup',    endScratch);
+canvas.addEventListener('mouseleave', endScratch);
+canvas.addEventListener('touchstart', startScratch, { passive: false });
+canvas.addEventListener('touchmove',  moveScratch,  { passive: false });
+canvas.addEventListener('touchend',   endScratch);
+
+function measureProgress() {
+  const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  let cleared = 0;
+  /* sample every 8th pixel for performance */
+  for (let i = 3; i < d.length; i += 32) {
+    if (d[i] === 0) cleared++;
+  }
+  const pct = cleared / (d.length / 32);
+  pbar.style.width = Math.min(pct * 100, 100) + '%';
+  if (pct > 0.44 && !revealed) doReveal();
+}
+
+/* ══ REVEAL SEQUENCE ══ */
+function doReveal() {
+  revealed = true;
+  scratching = false;
+
+  /* 1 ─ flash */
+  const fl = document.getElementById('flash');
+  fl.classList.add('on');
+  setTimeout(() => fl.classList.remove('on'), 200);
+
+  /* 2 ─ zone glow ring */
+  const ring = document.createElement('div');
+  ring.className = 'zone-ring';
+  zone.appendChild(ring);
+  setTimeout(() => ring.remove(), 900);
+
+  /* 3 ─ fill bar */
+  pbar.style.width = '100%';
+
+  /* 4 ─ fade out canvas */
+  let alpha = 0;
+  const fadeTimer = setInterval(() => {
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle   = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    alpha += 0.12;
+    if (alpha >= 1) {
+      clearInterval(fadeTimer);
+      canvas.style.transition = 'opacity .4s ease';
+      canvas.style.opacity = '0';
+      setTimeout(() => { canvas.style.display = 'none'; }, 400);
+    }
+  }, 14);
+
+  /* 5 ─ staggered text reveal */
+  setTimeout(() => {
+    reveal.classList.add('show');
+    setTimeout(() => {
+      document.getElementById('prizeCode').classList.add('animate');
+    }, 500);
+  }, 220);
+
+  /* 6 ─ hide hint */
+  hintEl.style.opacity = '0';
+  setTimeout(() => { hintEl.style.display = 'none'; }, 400);
+
+  /* 7 ─ show CTA */
+  setTimeout(() => {
+    ctaBtn.style.display = 'block';
+    ctaBtn.classList.add('show');
+  }, 950);
+
+  /* 8 ─ confetti burst (300 particles) */
+  setTimeout(() => launchConfetti(300), 450);
+
+  /* 9 ─ celebration modal */
+  setTimeout(() => {
+    document.getElementById('celModal').classList.add('open');
+    launchConfetti(200);
+  }, 1600);
+}
+
+/* ══ CONFETTI ENGINE ══ */
+const cC  = document.getElementById('confetti-canvas');
+const cX  = cC.getContext('2d');
+let parts = [];
+let rafId = null;
+
+function resizeCConf() {
+  cC.width  = window.innerWidth;
+  cC.height = window.innerHeight;
+}
+resizeCConf();
+window.addEventListener('resize', resizeCConf);
+
+const COLS = ['#9EFFAD','#C9A84C','#F0D080','#0F7A69','#ffffff','#F7FBF7','#6effa0','#FFD700'];
+
+function Particle() {
+  /* burst from center of viewport */
+  this.x  = cC.width  / 2 + (Math.random() - .5) * 100;
+  this.y  = cC.height / 2 + (Math.random() - .5) * 60;
+  const speed = 5 + Math.random() * 16;
+  const ang   = Math.random() * Math.PI * 2;
+  this.vx = Math.cos(ang) * speed;
+  this.vy = Math.sin(ang) * speed - 8;
+  this.color    = COLS[Math.floor(Math.random() * COLS.length)];
+  this.size     = 5 + Math.random() * 10;
+  this.shape    = Math.random() > .4 ? 'rect' : 'circle';
+  this.rot      = Math.random() * Math.PI * 2;
+  this.rotSpeed = (Math.random() - .5) * .24;
+  this.gravity  = 0.38;
+  this.alpha    = 1;
+  this.decay    = 0.008 + Math.random() * 0.007;
+}
+
+function launchConfetti(n) {
+  for (let i = 0; i < n; i++) {
+    setTimeout(() => parts.push(new Particle()), i * 6);
+  }
+  if (!rafId) animConf();
+}
+
+function animConf() {
+  cX.clearRect(0, 0, cC.width, cC.height);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.x += p.vx; p.y += p.vy;
+    p.vy += p.gravity; p.vx *= .99;
+    p.rot += p.rotSpeed;
+    p.alpha -= p.decay;
+    if (p.alpha <= 0) { parts.splice(i, 1); continue; }
+    cX.save();
+    cX.globalAlpha = p.alpha;
+    cX.translate(p.x, p.y);
+    cX.rotate(p.rot);
+    cX.fillStyle = p.color;
+    if (p.shape === 'rect') {
+      cX.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+    } else {
+      cX.beginPath();
+      cX.arc(0, 0, p.size/2, 0, Math.PI*2);
+      cX.fill();
+    }
+    cX.restore();
+  }
+  if (parts.length > 0) {
+    rafId = requestAnimationFrame(animConf);
+  } else {
+    rafId = null;
+    cX.clearRect(0, 0, cC.width, cC.height);
+  }
+}
+
+/* ══ ACTIONS ══ */
+function copyCode() {
+  const code = document.getElementById('prizeCode').textContent;
+  navigator.clipboard.writeText(code).catch(() => {});
+  showToast('✓ Code copied! Paste at checkout 🛒');
+  launchConfetti(120);
+}
+
+function shopNow() {
+  const code = document.getElementById('prizeCode').textContent;
+  launchConfetti(150);
+  window.open('https://www.frudexdryfruits.in/?winner=' + encodeURIComponent(code) + '&offer=450', '_blank');
+}
+
+function closeCel() {
+  document.getElementById('celModal').classList.remove('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
